@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital OPD Queue System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+            background-image: url(industry-hospital-RoyalColumbian1.jpg);
+        }
+        .content-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            min-height: 100vh;
+            margin: 0 auto; /* Center the container */
+        }
+        .tab {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .token {
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+        .faq-item {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+        .faq-question {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+        .admin-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            max-height: 800px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .admin-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* background-color: rgba(0, 0, 0, 0.5); */
+            z-index: 99;
+        }
+        .admin-modal-header {
+            background-color: #1e40af;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .admin-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .admin-modal-footer {
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .countdown {
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .next-patient-banner {
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+        .table-container {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        .table-container table {
+            width: 100%;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .hospital-logo {
+            width: 40px; /* Reduced size */
+            height: 40px; /* Reduced size */
+            margin: 0 10px; /* Added consistent margin */
+        }
+
+        /* Responsive Media Queries */
+        @media (max-width: 1024px) {
+            .admin-modal {
+                width: 95%;
+                height: 95vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-container {
+                max-width: 100%;
+            }
+            .admin-modal-body {
+                padding: 1rem;
+            }
+            .hospital-logo {
+                width: 36px;
+                height: 36px;
+                margin: 0 8px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            .hospital-logo {
+                width: 32px;
+                height: 32px;
+                margin: 0 6px;
+            }
+            .admin-modal-header h2 {
+                font-size: 1rem;
+            }
+            .admin-modal {
+                height: 100vh;
+                width: 100%;
+                border-radius: 0;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header .flex {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            header .flex > div:last-child {
+                margin-top: 0.5rem;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+            .tab {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+            .hospital-logo {
+                width: 28px;
+                height: 28px;
+                margin: 0 5px;
+            }
+            .admin-modal-body {
+                padding: 0.75rem;
+            }
+            .admin-modal-footer {
+                padding: 0.75rem;
+            }
+            .admin-modal-header {
+                padding: 0.75rem;
+            }
+            .next-patient-banner {
+                padding: 0.5rem 0.75rem;
+            }
+            .admin-modal-body .grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            header h1 {
+                font-size: 1rem;
+            }
+            header p {
+                font-size: 0.75rem;
+            }
+            .tab {
+                padding: 0.5rem 0.5rem;
+                font-size: 0.7rem;
+            }
+            .hospital-logo {
+                width: 24px;
+                height: 24px;
+                margin: 0 4px;
+            }
+        }
+
+        /* Fix for small screens */
+        @media (max-width: 320px) {
+            .tab {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.65rem;
+            }
+            .hospital-logo {
+                width: 22px;
+                height: 22px;
+                margin: 0 3px;
+            }
+            header h1 {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Landscape mode adjustments */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .content-container {
+                min-height: auto;
+            }
+            .admin-modal {
+                height: 95vh;
+            }
+            .admin-modal-body {
+                max-height: 60vh;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background-color: white;
+            }
+            .content-container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .admin-modal, .admin-modal-overlay, 
+            #adminLoginBtn, #tokenModal, #confirmModal, #adminLoginModal {
+                display: none !important;
+            }
+            .tab:not(.active), .tab-content:not(.active) {
+                display: none !important;
+            }
+            footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .content-container {
+                background-color: rgba(255, 255, 255, 0.2); /* semi-transparent white */
+                    -webkit-backdrop-filter: blur(10px); /* blurs background behind */
+                    backdrop-filter: blur(10px); /* for Safari */
+                            }
+            .bg-white {
+                background-color: #1e293b;
+            }
+            .text-gray-800, .text-gray-900, .text-gray-700, .text-gray-600 {
+                color: #e2e8f0;
+            }
+            .border-gray-200, .border-gray-300 {
+                border-color: #334155;
+            }
+            .bg-gray-50 {
+                background-color: #0f172a;
+            }
+            .text-gray-500 {
+                color: #94a3b8;
+            }
+            input, textarea, select {
+                /* background-color: #334155; */
+                color: #e2e8f0;
+                border-color: #475569;
+            }
+            input::placeholder, textarea::placeholder {
+                color: #94a3b8;
+            }
+            .faq-item {
+                border-color: #334155;
+            }
+            .bg-blue-50 {
+                /* background-color: rgba(59, 130, 246, 0.1); */
+            }
+            .bg-green-50 {
+                /* background-color: rgba(34, 197, 94, 0.1); */
+            }
+            .bg-yellow-50 {
+                /* background-color: rgba(234, 179, 8, 0.1); */
+            }
+            .bg-purple-50 {
+                /* background-color: rgba(168, 85, 247, 0.1); */
+            }
+            .text-blue-700 {
+                color: #60a5fa;
+            }
+            .text-green-700 {
+                color: #4ade80;
+            }
+            .text-yellow-700 {
+                color: #fcd34d;
+            }
+            .text-purple-700 {
+                color: #c4b5fd;
+            }
+        }
+        
+        /* Additional responsive fixes */
+        @media (max-width: 360px) {
+            .flex.border-b.overflow-x-auto {
+                justify-content: space-between;
+            }
+            .tab {
+                flex: 1;
+                text-align: center;
+                white-space: nowrap;
+            }
+            .token-modal-content {
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Fix for iPhone 5/SE and other very small screens */
+        @media (max-width: 320px) {
+            .px-4 {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .p-4 {
+                padding: 0.5rem;
+            }
+            .text-xl {
+                font-size: 1rem;
+                line-height: 1.5rem;
+            }
+        }
+        
+        /* Fix for tables on small screens */
+        @media (max-width: 480px) {
+            .table-container table th,
+            .table-container table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Fix for modals on small screens */
+        @media (max-height: 600px) {
+            #tokenModal .bg-white,
+            #confirmModal .bg-white,
+            #adminLoginModal .bg-white {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+        
+        /* Fix for iPhone X notch */
+        @supports (padding: max(0px)) {
+            .content-container {
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content Container (Centered) -->
+    <div class="content-container">
+        <!-- Header -->
+        <header class="bg-blue-600 shadow">
+            <div class="px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <!-- Left Logo -->
+                    <div class="flex items-center">
+                        <div class="hospital-logo bg-white rounded-full p-1 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="text-blue-600">
+                                <path fill="currentColor" d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30 30-13.432 30-30S48.568 2 32 2zm0 4c14.359 0 26 11.641 26 26S46.359 58 32 58 6 46.359 6 32 17.641 6 32 6z"/>
+                                <path fill="currentColor" d="M32 12a2 2 0 00-2 2v16H14a2 2 0 000 4h16v16a2 2 0 004 0V34h16a2 2 0 000-4H34V14a2 2 0 00-2-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-semibold text-white">Royal Columbian Hospital</h1>
+                            <p class="text-sm text-blue-100">OPD Queue System</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Logo and Admin Button -->
+                    <div class="flex items-center">
+                        <button id="adminLoginBtn" class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition">
+                            Admin
+                        </button>
+                        <div class="hospital-logo bg-white rounded-full p-1 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="text-blue-600">
+                                <path fill="currentColor" d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30 30-13.432 30-30S48.568 2 32 2zm0 4c14.359 0 26 11.641 26 26S46.359 58 32 58 6 46.359 6 32 17.641 6 32 6z"/>
+                                <path fill="currentColor" d="M32 12a2 2 0 00-2 2v16H14a2 2 0 000 4h16v16a2 2 0 004 0V34h16a2 2 0 000-4H34V14a2 2 0 00-2-2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="px-4 py-6">
+            <!-- Current Status Banner -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-2">OPD Queue Status</h2>
+                        <p class="text-gray-600">Current patients in queue: <span id="queueCount" class="font-semibold">0</span></p>
+                    </div>
+                    <div class="mt-4 md:mt-0 text-right">
+                        <p class="text-sm text-gray-500">Last updated: <span id="lastUpdated" class="font-medium">Just now</span></p>
+                        <p class="text-sm text-gray-500">Current token being served: <span id="currentToken" class="font-medium token">None</span></p>
+                        <div id="nextPatientBanner" class="next-patient-banner mt-2 hidden">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-blue-100">Next Patient</p>
+                                    <p id="nextPatientName" class="font-semibold">-</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-blue-100">Token</p>
+                                    <p id="nextPatientToken" class="font-semibold token">-</p>
+                                </div>
+                            </div>
+                            <div class="mt-1 flex justify-between items-center">
+                                <p class="text-xs">Get ready, you're next!</p>
+                                <p class="text-xs">Next in: <span id="nextTokenTimer" class="countdown">5:00</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="bg-white rounded-t-lg shadow">
+                <div class="flex border-b overflow-x-auto">
+                    <div class="tab active" data-tab="generate-token">Generate Token</div>
+                    <div class="tab" data-tab="check-status">Check Status</div>
+                    <div class="tab" data-tab="faq">FAQ</div>
+                </div>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="bg-white rounded-b-lg shadow p-4 mb-6">
+                <!-- Generate Token Tab -->
+                <div id="generate-token" class="tab-content active">
+                    <h2 class="text-xl font-semibold mb-4">Patient Registration</h2>
+                    
+                    <form id="tokenForm" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="name" name="name" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                            <input type="number" id="age" name="age" min="1" max="120" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Visit</label>
+                            <textarea id="reason" name="reason" rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="sendToGoogle" name="sendToGoogle" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                            <label for="sendToGoogle" class="ml-2 block text-sm text-gray-700">
+                                Send my information to Google Forms
+                            </label>
+                        </div>
+                        <div id="googleFormInfo" class="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+                            <p>Your information will also be submitted to our secure database via Google Forms.</p>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Generate Token
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Check Status Tab -->
+                <div id="check-status" class="tab-content">
+                    <h2 class="text-xl font-semibold mb-4">Check Your Queue Status</h2>
+                    
+                    <div class="bg-white rounded-lg mb-6">
+                        <div class="flex border-b">
+                            <div class="tab active" data-status-tab="token-search">Search by Token</div>
+                            <div class="tab" data-status-tab="name-search">Search by Name/Phone</div>
+                        </div>
+                    </div>
+                    
+                    <div id="token-search" class="status-tab-content">
+                        <form id="tokenStatusForm" class="space-y-4">
+                            <div>
+                                <label for="tokenSearch" class="block text-sm font-medium text-gray-700 mb-1">Enter Your Token Number</label>
+                                <input type="text" id="tokenSearch" name="tokenSearch" placeholder="e.g. OPD-001" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    Check Status
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div id="name-search" class="status-tab-content hidden">
+                        <form id="nameStatusForm" class="space-y-4">
+                            <div>
+                                <label for="nameSearch" class="block text-sm font-medium text-gray-700 mb-1">Enter Your Name</label>
+                                <input type="text" id="nameSearch" name="nameSearch" placeholder="Full Name" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div>
+                                <label for="phoneSearch" class="block text-sm font-medium text-gray-700 mb-1">Enter Your Phone Number</label>
+                                <input type="tel" id="phoneSearch" name="phoneSearch" placeholder="Phone Number" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    Check Status
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="statusResult" class="mt-6 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-semibold text-blue-800">Your Queue Information</h3>
+                                <span id="statusToken" class="token bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">OPD-001</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Name</p>
+                                    <p id="statusName" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Registration Time</p>
+                                    <p id="statusTime" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Position in Queue</p>
+                                    <p id="statusPosition" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Estimated Wait Time</p>
+                                    <p id="statusWaitTime" class="font-medium">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 mt-4">
+                            <h3 class="font-semibold mb-2">Queue Status</h3>
+                            <div class="flex items-center mb-4">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div id="queueProgress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <span class="ml-4 text-sm font-medium" id="queuePositionText">-</span>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                There are <span id="peopleAhead" class="font-medium">-</span> people ahead of you.
+                                Your estimated time to be seen is <span id="estimatedTime" class="font-medium">-</span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FAQ Tab -->
+                <div id="faq" class="tab-content">
+                    <h2 class="text-xl font-semibold mb-4">Frequently Asked Questions</h2>
+                    
+                    <div class="space-y-2">
+                        <div class="faq-item rounded-lg border border-gray-200">
+                            <div class="faq-question flex justify-between items-center p-4">
+                                <h3 class="font-medium text-gray-900">How does the token system work?</h3>
+                                <svg class="faq-icon w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                            <div class="faq-answer px-4 pb-4">
+                                <p class="text-gray-600">
+                                    Our token system helps manage patient flow in the outpatient department. When you arrive, register your details at the registration desk or through this online system. You'll receive a unique token number (e.g., OPD-001) that reserves your place in the queue. Patients are generally seen in the order of token numbers, but priority may be given to emergency cases.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item rounded-lg border border-gray-200">
+                            <div class="faq-question flex justify-between items-center p-4">
+                                <h3 class="font-medium text-gray-900">How can I check my position in the queue?</h3>
+                                <svg class="faq-icon w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                            <div class="faq-answer px-4 pb-4">
+                                <p class="text-gray-600">
+                                    You can check your position in the queue in two ways:
+                                </p>
+                                <ul class="list-disc pl-5 mt-2 text-gray-600">
+                                    <li>Enter your token number in the "Check Status" tab</li>
+                                    <li>Enter your name and phone number in the "Check Status" tab</li>
+                                </ul>
+                                <p class="text-gray-600 mt-2">
+                                    The system will show your current position, estimated waiting time, and how many patients are ahead of you.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item rounded-lg border border-gray-200">
+                            <div class="faq-question flex justify-between items-center p-4">
+                                <h3 class="font-medium text-gray-900">What happens if I miss my turn?</h3>
+                                <svg class="faq-icon w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                            <div class="faq-answer px-4 pb-4">
+                                <p class="text-gray-600">
+                                    If you miss your turn when your token number is called, please approach the reception desk. Depending on the current queue status, you may be accommodated at the next available slot or may need to take a new token. We recommend arriving at least 15 minutes before your estimated consultation time.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue List -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-xl font-semibold mb-4">Current Queue</h2>
+                <div class="table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Time</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wait Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr id="emptyQueue">
+                                <td colspan="5" class="px-4 py-4 text-center text-gray-500">No patients in queue</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <!-- <footer class="bg-gray-800 text-white py-4 mt-6">
+            <div class="px-4">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold mb-2">Royal Columbian Hospital</h3>
+                    <p class="text-sm text-gray-300">330 E Columbia St, New Westminster, BC</p>
+                    <p class="text-sm text-gray-300">Emergency: (604) 520-4155</p>
+                </div>
+                <div class="border-t border-gray-700 mt-4 pt-4 text-center">
+                    <p class="text-sm">&copy; 2023 Royal Columbian Hospital OPD Queue System</p>
+                </div>
+            </div>
+        </footer> -->
+    </div>
+
+    <!-- Token Generated Modal -->
+    <div id="tokenModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 token-modal-content">
+            <div class="text-center mb-4">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Token Generated Successfully!</h3>
+                <p class="text-sm text-gray-500 mb-4">Please keep your token number for reference.</p>
+                
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-gray-600 mb-1">Your Token Number</p>
+                    <p id="generatedToken" class="token text-2xl font-bold text-blue-700">OPD-001</p>
+                </div>
+                
+                <div class="text-sm text-gray-600 mb-4">
+                    <p>Registration Time: <span id="regTime" class="font-medium">-</span></p>
+                    <p>Position in Queue: <span id="queuePos" class="font-medium">-</span></p>
+                    <p>Estimated Wait Time: <span id="estWaitTime" class="font-medium">-</span></p>
+                </div>
+                
+                <button id="closeTokenModal" class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4" id="confirmTitle">Confirm Action</h3>
+            <p class="text-gray-600 mb-6" id="confirmMessage">Are you sure you want to perform this action?</p>
+            
+            <div class="flex justify-end gap-3">
+                <button id="cancelConfirmBtn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
+                    Cancel
+                </button>
+                <button id="confirmBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Admin Login</h3>
+                <button id="closeAdminLoginModal" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="adminLoginForm" class="space-y-4">
+                <div>
+                    <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="adminPassword" name="adminPassword" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Modal -->
+    <div id="adminDashboardModal" class="hidden">
+        <div class="admin-modal-overlay"></div>
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <div class="flex items-center">
+                    <!-- Admin Dashboard Left Logo -->
+                    <div class="hospital-logo bg-white rounded-full p-1 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="text-blue-600">
+                            <path fill="currentColor" d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30 30-13.432 30-30S48.568 2 32 2zm0 4c14.359 0 26 11.641 26 26S46.359 58 32 58 6 46.359 6 32 17.641 6 32 6z"/>
+                            <path fill="currentColor" d="M32 12a2 2 0 00-2 2v16H14a2 2 0 000 4h16v16a2 2 0 004 0V34h16a2 2 0 000-4H34V14a2 2 0 00-2-2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-semibold">Royal Columbian Hospital OPD Admin Dashboard</h2>
+                </div>
+                <button id="closeAdminDashboardModal" class="text-white hover:text-gray-200">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="admin-modal-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Queue Summary</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">Total Waiting</p>
+                                <p class="text-2xl font-bold text-blue-700" id="adminTotalWaiting">0</p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">Served Today</p>
+                                <p class="text-2xl font-bold text-green-700" id="adminTotalServed">0</p>
+                            </div>
+                            <div class="bg-yellow-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">Next Token In</p>
+                                <p class="text-2xl font-bold text-yellow-700" id="adminNextTokenTime">5:00</p>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">Current Token</p>
+                                <p class="text-lg font-bold text-purple-700" id="adminCurrentToken">None</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Quick Actions</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="callNextBtn" class="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Call Next Patient
+                            </button>
+                            <button id="completeCurrentBtn" class="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Complete Current
+                            </button>
+                            <button id="resetQueueBtn" class="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                Reset Queue
+                            </button>
+                            <button id="adminLogoutBtn" class="p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <h3 class="font-medium">Queue Management</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason for Visit</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Time</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminQueueTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr id="adminEmptyQueue">
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No patients in queue</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-modal-footer">
+                <p class="text-sm text-gray-500 mr-auto">Last updated: <span id="adminLastUpdated">Just now</span></p>
+                <button id="refreshQueue" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden iframe for Google Form submission -->
+    <iframe name="googleFormSubmitFrame" id="googleFormSubmitFrame" style="display:none;"></iframe>
+
+    <script>
+        // Queue data storage
+        let queue = [];
+        let tokenCounter = 1;
+        let currentTokenIndex = 0;
+        let servedCount = 0;
+        const CONSULTATION_TIME = 5; // minutes per patient
+        let timerInterval;
+        let secondsRemaining = CONSULTATION_TIME * 60; // 5 minutes in seconds
+        
+        // Google Form URL - Your actual Google Form URL
+        const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdGQcgYJpFbRxj_RBnEvIVEj-l0Ibr4QVoQgHpLyuDLxGNlFQ/formResponse";
+        
+        // Google Form field IDs - These need to be updated based on your form's actual field IDs
+        const GOOGLE_FORM_FIELDS = {
+            name: "entry.1234567890",    // Replace with your actual field ID for name
+            age: "entry.1234567891",     // Replace with your actual field ID for age
+            phone: "entry.1234567892",   // Replace with your actual field ID for phone
+            reason: "entry.1234567893"   // Replace with your actual field ID for reason
+        };
+        
+        // Initialize timer
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsRemaining = CONSULTATION_TIME * 60;
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                secondsRemaining--;
+                
+                if (secondsRemaining <= 0) {
+                    // Time's up, move to next patient
+                    if (currentTokenIndex < queue.length) {
+                        currentTokenIndex++;
+                        servedCount++;
+                        updateQueueDisplay();
+                        updateAdminDashboard();
+                        
+                        // Reset timer
+                        secondsRemaining = CONSULTATION_TIME * 60;
+                    } else {
+                        // No more patients, stop timer
+                        clearInterval(timerInterval);
+                    }
+                }
+                
+                updateTimerDisplay();
+            }, 1000);
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(secondsRemaining / 60);
+            const seconds = secondsRemaining % 60;
+            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('nextTokenTimer').textContent = formattedTime;
+            if (document.getElementById('adminNextTokenTime')) {
+                document.getElementById('adminNextTokenTime').textContent = formattedTime;
+            }
+            
+            // Update wait times for all patients in queue
+            updateWaitTimes();
+            
+            // Update next patient banner
+            updateNextPatientBanner();
+        }
+        
+        // Update next patient banner
+        function updateNextPatientBanner() {
+            const nextPatientBanner = document.getElementById('nextPatientBanner');
+            const nextPatientName = document.getElementById('nextPatientName');
+            const nextPatientToken = document.getElementById('nextPatientToken');
+            
+            // Check if there's a next patient
+            if (queue.length > currentTokenIndex + 1) {
+                const nextPatient = queue[currentTokenIndex + 1];
+                nextPatientName.textContent = nextPatient.name;
+                nextPatientToken.textContent = nextPatient.token;
+                nextPatientBanner.classList.remove('hidden');
+            } else {
+                nextPatientBanner.classList.add('hidden');
+            }
+        }
+        
+        // Update wait times for all patients
+        function updateWaitTimes() {
+            queue.forEach((patient, index) => {
+                if (index < currentTokenIndex) {
+                    patient.waitTime = "Completed";
+                } else if (index === currentTokenIndex) {
+                    patient.waitTime = `${Math.floor(secondsRemaining / 60)}:${(secondsRemaining % 60).toString().padStart(2, '0')}`;
+                } else {
+                    const waitMinutes = (index - currentTokenIndex) * CONSULTATION_TIME;
+                    const additionalSeconds = index === currentTokenIndex + 1 ? secondsRemaining : 0;
+                    patient.waitTime = `${waitMinutes} min`;
+                }
+            });
+            
+            // Update the queue display to reflect new wait times
+            updateQueueDisplay();
+        }
+        
+        // Tab switching functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                if (tab.classList.contains('hidden')) return;
+                
+                // Get the parent container to determine which tab system we're in
+                const parentContainer = tab.closest('.bg-white');
+                
+                // If this is a main tab
+                if (tab.hasAttribute('data-tab')) {
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all tabs
+                    document.querySelectorAll('[data-tab]').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Add active class to the clicked tab
+                    tab.classList.add('active');
+                }
+                // If this is a status tab
+                else if (tab.hasAttribute('data-status-tab')) {
+                    // Hide all status tab contents
+                    document.querySelectorAll('.status-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // Remove active class from all status tabs
+                    document.querySelectorAll('[data-status-tab]').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // Show the selected status tab content
+                    const tabId = tab.getAttribute('data-status-tab');
+                    document.getElementById(tabId).classList.remove('hidden');
+                    
+                    // Add active class to the clicked status tab
+                    tab.classList.add('active');
+                }
+            });
+        });
+
+        // FAQ accordion functionality
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                faqItem.classList.toggle('active');
+            });
+        });
+
+        // Format time function
+        function formatTime(date) {
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            return `${hours}:${minutes} ${ampm}`;
+        }
+        
+        // Calculate estimated time to be seen
+        function calculateEstimatedTime(position) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + (position * CONSULTATION_TIME));
+            return formatTime(now);
+        }
+        
+        // Update queue display
+        function updateQueueDisplay() {
+            const tableBody = document.getElementById('queueTableBody');
+            const queueCount = document.getElementById('queueCount');
+            const currentToken = document.getElementById('currentToken');
+            const lastUpdated = document.getElementById('lastUpdated');
+            
+            // Update queue count and last updated time
+            queueCount.textContent = queue.length - currentTokenIndex;
+            lastUpdated.textContent = formatTime(new Date());
+            
+            // Update current token being served
+            if (queue.length > 0 && currentTokenIndex < queue.length) {
+                currentToken.textContent = queue[currentTokenIndex].token;
+            } else {
+                currentToken.textContent = 'None';
+            }
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            if (queue.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.id = 'emptyQueue';
+                emptyRow.innerHTML = '<td colspan="5" class="px-4 py-4 text-center text-gray-500">No patients in queue</td>';
+                tableBody.appendChild(emptyRow);
+                return;
+            }
+            
+            // Populate table with queue data
+            queue.forEach((patient, index) => {
+                const row = document.createElement('tr');
+                
+                let statusClass = 'bg-yellow-100 text-yellow-800';
+                let statusText = 'Waiting';
+                
+                if (index === currentTokenIndex) {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Being Served';
+                } else if (index < currentTokenIndex) {
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = 'Completed';
+                }
+                
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span class="token font-medium text-blue-600">${patient.token}</span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        ${patient.name}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        ${patient.registrationTime}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span class="countdown ${index === currentTokenIndex ? 'text-green-600' : ''}">
+                            ${patient.waitTime}
+                        </span>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Update next patient banner
+            updateNextPatientBanner();
+        }
+        
+        // Update admin dashboard
+        function updateAdminDashboard() {
+            const tableBody = document.getElementById('adminQueueTableBody');
+            const totalWaiting = document.getElementById('adminTotalWaiting');
+            const totalServed = document.getElementById('adminTotalServed');
+            const adminCurrentToken = document.getElementById('adminCurrentToken');
+            const adminLastUpdated = document.getElementById('adminLastUpdated');
+            
+            // Update summary stats
+            totalWaiting.textContent = queue.length - currentTokenIndex;
+            totalServed.textContent = servedCount;
+            adminLastUpdated.textContent = formatTime(new Date());
+            
+            // Update current token
+            if (queue.length > 0 && currentTokenIndex < queue.length) {
+                adminCurrentToken.textContent = queue[currentTokenIndex].token;
+            } else {
+                adminCurrentToken.textContent = 'None';
+            }
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            if (queue.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.id = 'adminEmptyQueue';
+                emptyRow.innerHTML = '<td colspan="7" class="px-6 py-4 text-center text-gray-500">No patients in queue</td>';
+                tableBody.appendChild(emptyRow);
+                return;
+            }
+            
+            // Populate table with queue data
+            queue.forEach((patient, index) => {
+                const row = document.createElement('tr');
+                
+                let statusClass = 'bg-yellow-100 text-yellow-800';
+                let statusText = 'Waiting';
+                
+                if (index === currentTokenIndex) {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Being Served';
+                } else if (index < currentTokenIndex) {
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = 'Completed';
+                }
+                
+                // Truncate reason if it's too long
+                const truncatedReason = patient.reason.length > 30 ? 
+                    patient.reason.substring(0, 30) + '...' : 
+                    patient.reason;
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="token font-medium text-blue-600">${patient.token}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${patient.name}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${patient.phone}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span title="${patient.reason}" class="cursor-help">${truncatedReason}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${patient.registrationTime}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        ${index >= currentTokenIndex ? 
+                            `<button class="text-blue-600 hover:text-blue-900 mr-2 call-patient" data-index="${index}">Call</button>
+                            <button class="text-red-600 hover:text-red-900 remove-patient" data-index="${index}">Remove</button>` : 
+                            `<span class="text-gray-400">Completed</span>`
+                        }
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.call-patient').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    callPatient(index);
+                });
+            });
+            
+            document.querySelectorAll('.remove-patient').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    showConfirmModal(
+                        'Remove Patient', 
+                        `Are you sure you want to remove patient ${queue[index].name} (${queue[index].token}) from the queue?`,
+                        () => removePatient(index)
+                    );
+                });
+            });
+        }
+        
+        // Call specific patient
+        function callPatient(index) {
+            if (index < currentTokenIndex) return;
+            
+            // If calling a patient ahead in the queue
+            if (index > currentTokenIndex) {
+                // Move the patient to the current position
+                const patient = queue.splice(index, 1)[0];
+                queue.splice(currentTokenIndex, 0, patient);
+                
+                // Reset timer since we're calling a new patient
+                secondsRemaining = CONSULTATION_TIME * 60;
+                updateTimerDisplay();
+            }
+            
+            updateQueueDisplay();
+            updateAdminDashboard();
+        }
+        
+        // Remove patient from queue
+        function removePatient(index) {
+            if (index < currentTokenIndex) return;
+            
+            queue.splice(index, 1);
+            updateQueueDisplay();
+            updateAdminDashboard();
+            updateWaitTimes();
+        }
+        
+// Toggle Google Form info visibility
+document.getElementById('sendToGoogle').addEventListener('change', function() {
+    const googleFormInfo = document.getElementById('googleFormInfo');
+    if (this.checked) {
+        googleFormInfo.classList.remove('hidden');
+    } else {
+        googleFormInfo.classList.add('hidden');
+    }
+});
+
+// Generate token form submission
+document.getElementById('tokenForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const age = document.getElementById('age').value;
+    const phone = document.getElementById('phone').value;
+    const reason = document.getElementById('reason').value;
+    const sendToGoogle = document.getElementById('sendToGoogle').checked;
+    
+    // Register patient locally
+    registerPatient(name, age, phone, reason);
+    
+    // If Google Forms integration is enabled, submit data to Google Forms
+    if (sendToGoogle) {
+        submitToGoogleForm(name, age, phone, reason);
+    }
+    
+    // Reset form
+    this.reset();
+    document.getElementById('googleFormInfo').classList.remove('hidden');
+    document.getElementById('sendToGoogle').checked = true;
+});
+
+// Submit data to Google Form
+function submitToGoogleForm(name, age, phone, reason) {
+    try {
+        const form = document.createElement('form');
+        form.action = GOOGLE_FORM_URL;
+        form.method = 'POST';
+        form.target = 'googleFormSubmitFrame';
+        form.style.display = 'none';
+
+        // Name
+        const nameInput = document.createElement('input');
+        nameInput.name = GOOGLE_FORM_FIELDS.name;
+        nameInput.value = name;
+        form.appendChild(nameInput);
+
+        // Age
+        const ageInput = document.createElement('input');
+        ageInput.name = GOOGLE_FORM_FIELDS.age;
+        ageInput.value = age;
+        form.appendChild(ageInput);
+
+        // Phone
+        const phoneInput = document.createElement('input');
+        phoneInput.name = GOOGLE_FORM_FIELDS.phone;
+        phoneInput.value = phone;
+        form.appendChild(phoneInput);
+
+        // Reason
+        const reasonInput = document.createElement('input');
+        reasonInput.name = GOOGLE_FORM_FIELDS.reason;
+        reasonInput.value = reason;
+        form.appendChild(reasonInput);
+
+        // Append form to body, submit it, and remove it
+        document.body.appendChild(form);
+        form.submit();
+
+        setTimeout(() => {
+            document.body.removeChild(form);
+        }, 500);
+
+        console.log('Form submitted to Google Forms');
+    } catch (error) {
+        console.error('Error submitting to Google Forms:', error);
+    }
+}
+        
+        // Register patient function
+        function registerPatient(name, age, phone, reason) {
+            // Generate token
+            const tokenNumber = tokenCounter.toString().padStart(3, '0');
+            const token = `OPD-${tokenNumber}`;
+            tokenCounter++;
+            
+            // Get current time
+            const now = new Date();
+            const registrationTime = formatTime(now);
+            
+            // Calculate wait time
+            let waitTime;
+            if (queue.length === 0 || currentTokenIndex >= queue.length) {
+                waitTime = "Immediate";
+            } else {
+                const position = queue.length - currentTokenIndex;
+                waitTime = `${position * CONSULTATION_TIME} min`;
+            }
+            
+            // Add to queue
+            const patient = {
+                token,
+                name,
+                age,
+                phone,
+                reason,
+                registrationTime,
+                timestamp: now,
+                waitTime
+            };
+            
+            queue.push(patient);
+            
+            // Start timer if this is the first patient
+            if (queue.length === 1 && currentTokenIndex === 0) {
+                startTimer();
+            }
+            
+            // Update queue display
+            updateQueueDisplay();
+            updateAdminDashboard();
+            
+            // Calculate position and wait time
+            const position = queue.length - currentTokenIndex;
+            const estimatedTime = calculateEstimatedTime(position - 1);
+            
+            // Set modal values
+            document.getElementById('generatedToken').textContent = token;
+            document.getElementById('regTime').textContent = registrationTime;
+            document.getElementById('queuePos').textContent = position;
+            document.getElementById('estWaitTime').textContent = waitTime;
+            
+            // Show modal
+            document.getElementById('tokenModal').classList.remove('hidden');
+        }
+        
+        // Close token modal
+        document.getElementById('closeTokenModal').addEventListener('click', function() {
+            document.getElementById('tokenModal').classList.add('hidden');
+        });
+        
+        // Check status by token form submission
+        document.getElementById('tokenStatusForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const tokenSearch = document.getElementById('tokenSearch').value.trim().toUpperCase();
+            
+            // Find the patient in the queue
+            const patientIndex = queue.findIndex(p => p.token === tokenSearch);
+            
+            if (patientIndex !== -1) {
+                displayPatientStatus(patientIndex);
+            } else {
+                alert('Token not found. Please check and try again.');
+                document.getElementById('statusResult').classList.add('hidden');
+            }
+        });
+        
+        // Check status by name/phone form submission
+        document.getElementById('nameStatusForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nameSearch = document.getElementById('nameSearch').value.trim().toLowerCase();
+            const phoneSearch = document.getElementById('phoneSearch').value.trim();
+            
+            // Find the patient in the queue
+            const patientIndex = queue.findIndex(p => 
+                p.name.toLowerCase() === nameSearch && 
+                p.phone === phoneSearch
+            );
+            
+            if (patientIndex !== -1) {
+                displayPatientStatus(patientIndex);
+            } else {
+                alert('Patient not found. Please check your name and phone number.');
+                document.getElementById('statusResult').classList.add('hidden');
+            }
+        });
+        
+        // Display patient status
+        function displayPatientStatus(patientIndex) {
+            const patient = queue[patientIndex];
+            const position = patientIndex - currentTokenIndex + 1;
+            
+            // Calculate wait time
+            let waitTime, positionText;
+            if (patientIndex < currentTokenIndex) {
+                waitTime = 'Completed';
+                positionText = 'Completed';
+            } else if (patientIndex === currentTokenIndex) {
+                waitTime = 'Currently being served';
+                positionText = 'Currently being served';
+            } else {
+                waitTime = patient.waitTime;
+                positionText = `Position: ${position} of ${queue.length - currentTokenIndex}`;
+            }
+            
+            // Calculate progress percentage
+            let progressPercentage = 0;
+            if (patientIndex < currentTokenIndex) {
+                progressPercentage = 100;
+            } else if (patientIndex === currentTokenIndex) {
+                progressPercentage = 50;
+            } else if (queue.length - currentTokenIndex > 1) {
+                progressPercentage = ((queue.length - currentTokenIndex - position) / (queue.length - currentTokenIndex - 1)) * 100;
+            }
+            
+            // Update status result
+            document.getElementById('statusToken').textContent = patient.token;
+            document.getElementById('statusName').textContent = patient.name;
+            document.getElementById('statusTime').textContent = patient.registrationTime;
+            document.getElementById('statusPosition').textContent = position <= 0 ? 'Completed' : position;
+            document.getElementById('statusWaitTime').textContent = waitTime;
+            
+            // Update queue position
+            document.getElementById('queueProgress').style.width = `${progressPercentage}%`;
+            document.getElementById('queuePositionText').textContent = positionText;
+            
+            // Update people ahead
+            const peopleAhead = position <= 1 ? 0 : position - 1;
+            document.getElementById('peopleAhead').textContent = peopleAhead;
+            
+            // Update estimated time
+            const estimatedTime = position <= 1 ? 'Now' : calculateEstimatedTime(position - 1);
+            document.getElementById('estimatedTime').textContent = estimatedTime;
+            
+            // Show the result
+            document.getElementById('statusResult').classList.remove('hidden');
+        }
+        
+        // Admin login button
+        document.getElementById('adminLoginBtn').addEventListener('click', function() {
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+        });
+        
+        // Close admin login modal
+        document.getElementById('closeAdminLoginModal').addEventListener('click', function() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        });
+        
+        // Admin login form
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('adminPassword').value;
+            
+            if (password === 'admin123') {
+                document.getElementById('adminLoginModal').classList.add('hidden');
+                document.getElementById('adminDashboardModal').classList.remove('hidden');
+                updateAdminDashboard();
+            } else {
+                alert('Invalid password. Please try again.');
+            }
+        });
+        
+        // Close admin dashboard modal
+        document.getElementById('closeAdminDashboardModal').addEventListener('click', function() {
+            document.getElementById('adminDashboardModal').classList.add('hidden');
+        });
+        
+        // Admin logout
+        document.getElementById('adminLogoutBtn').addEventListener('click', function() {
+            document.getElementById('adminDashboardModal').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        });
+        
+        // Call next patient
+        document.getElementById('callNextBtn').addEventListener('click', function() {
+            if (currentTokenIndex < queue.length) {
+                currentTokenIndex++;
+                servedCount++;
+                
+                // Reset timer for next patient
+                secondsRemaining = CONSULTATION_TIME * 60;
+                updateTimerDisplay();
+                
+                updateQueueDisplay();
+                updateAdminDashboard();
+            } else {
+                alert('No more patients in the queue.');
+            }
+        });
+        
+        // Complete current patient
+        document.getElementById('completeCurrentBtn').addEventListener('click', function() {
+            if (currentTokenIndex < queue.length) {
+                currentTokenIndex++;
+                servedCount++;
+                
+                // Reset timer for next patient
+                secondsRemaining = CONSULTATION_TIME * 60;
+                updateTimerDisplay();
+                
+                updateQueueDisplay();
+                updateAdminDashboard();
+            } else {
+                alert('No patient is currently being served.');
+            }
+        });
+        
+        // Reset queue
+        document.getElementById('resetQueueBtn').addEventListener('click', function() {
+            showConfirmModal(
+                'Reset Queue', 
+                'Are you sure you want to reset the entire queue? This action cannot be undone.',
+                resetQueue
+            );
+        });
+        
+        // Reset queue function
+        function resetQueue() {
+            queue = [];
+            currentTokenIndex = 0;
+            tokenCounter = 1;
+            servedCount = 0;
+            
+            // Stop and reset timer
+            clearInterval(timerInterval);
+            secondsRemaining = CONSULTATION_TIME * 60;
+            updateTimerDisplay();
+            
+            updateQueueDisplay();
+            updateAdminDashboard();
+        }
+        
+        // Refresh queue
+        document.getElementById('refreshQueue').addEventListener('click', function() {
+            updateQueueDisplay();
+            updateAdminDashboard();
+        });
+        
+        // Show confirmation modal
+        function showConfirmModal(title, message, confirmCallback) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            
+            // Set confirm button action
+            document.getElementById('confirmBtn').onclick = function() {
+                confirmCallback();
+                document.getElementById('confirmModal').classList.add('hidden');
+            };
+            
+            // Show modal
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+        
+        // Cancel confirmation
+        document.getElementById('cancelConfirmBtn').addEventListener('click', function() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        });
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === document.getElementById('tokenModal')) {
+                document.getElementById('tokenModal').classList.add('hidden');
+            }
+            if (event.target === document.getElementById('confirmModal')) {
+                document.getElementById('confirmModal').classList.add('hidden');
+            }
+            if (event.target === document.getElementById('adminLoginModal')) {
+                document.getElementById('adminLoginModal').classList.add('hidden');
+            }
+            if (event.target === document.querySelector('.admin-modal-overlay')) {
+                document.getElementById('adminDashboardModal').classList.add('hidden');
+            }
+        });
+        
+        // Initialize
+        updateTimerDisplay();
+        updateQueueDisplay();
+        
+        // Handle orientation changes for better mobile experience
+        window.addEventListener('orientationchange', function() {
+            // Small delay to allow the browser to complete the orientation change
+            setTimeout(() => {
+                updateQueueDisplay();
+                if (document.getElementById('adminDashboardModal').classList.contains('hidden') === false) {
+                    updateAdminDashboard();
+                }
+            }, 300);
+        });
+        
+        // Adjust for mobile devices
+        function adjustForMobile() {
+            if (window.innerWidth <= 640) {
+                // Adjust tab text for smaller screens
+                document.querySelectorAll('.tab[data-tab="generate-token"]').forEach(tab => {
+                    tab.textContent = 'Get Token';
+                });
+                document.querySelectorAll('.tab[data-tab="check-status"]').forEach(tab => {
+                    tab.textContent = 'Status';
+                });
+            } else {
+                // Reset tab text for larger screens
+                document.querySelectorAll('.tab[data-tab="generate-token"]').forEach(tab => {
+                    tab.textContent = 'Generate Token';
+                });
+                document.querySelectorAll('.tab[data-tab="check-status"]').forEach(tab => {
+                    tab.textContent = 'Check Status';
+                });
+            }
+        }
+        
+        // Call adjustForMobile on page load and resize
+        adjustForMobile();
+        window.addEventListener('resize', adjustForMobile);
+        
+        // Additional responsive fixes
+        function applyResponsiveFixes() {
+            // Fix for very small screens
+            if (window.innerWidth <= 360) {
+                document.querySelectorAll('.px-4').forEach(el => {
+                    el.classList.remove('px-4');
+                    el.classList.add('px-2');
+                });
+            }
+            
+            // Fix for landscape mode on small devices
+            if (window.innerHeight <= 500 && window.innerWidth > window.innerHeight) {
+                document.querySelector('.content-container').style.minHeight = 'auto';
+            } else {
+                document.querySelector('.content-container').style.minHeight = '100vh';
+            }
+        }
+        
+        // Apply responsive fixes on load and resize
+        applyResponsiveFixes();
+        window.addEventListener('resize', applyResponsiveFixes);
+        
+        // Fix for iOS devices with notch
+        function fixIOSNotch() {
+            if (/iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream) {
+                document.querySelector('meta[name="viewport"]').setAttribute('content', 
+                    'width=device-width, initial-scale=1.0, viewport-fit=cover');
+            }
+        }
+        
+        fixIOSNotch();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9655b20e87e5a803',t:'MTc1MzU1MTc2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
